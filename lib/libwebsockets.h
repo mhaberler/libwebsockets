@@ -183,6 +183,15 @@ enum libwebsocket_callback_reasons {
 	LWS_CALLBACK_UNLOCK_POLL,
 };
 
+// argument structure for all external poll related calls
+// passed in via 'in'
+struct libwebsocket_pollargs {
+    int fd;
+    int events;
+    int prev_events;
+};
+
+
 #ifndef LWS_NO_EXTENSIONS
 enum libwebsocket_extension_callback_reasons {
 	LWS_EXT_CALLBACK_SERVER_CONTEXT_CONSTRUCT,
