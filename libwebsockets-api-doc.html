@@ -788,11 +788,24 @@ One-time call per protocol indicating
 this protocol won't get used at all after this callback, the
 context is getting destroyed.  Take the opportunity to
 deallocate everything that was allocated by the protocol.
+</blockquote>
 <p>
-The next four reasons are optional and only need taking care of if you
+<h3>External poll support callbacks:</h3>
+The next five reasons are optional and only need taking care of if you
 will be integrating libwebsockets sockets into an external polling
 array.
+For these calls, <tt><b>in</b></tt> will point to a <tt><i>struct libwebsocket_pollargs</i></tt>, which contains the fields:
+<blockquote>
+<dl>
+<dt><b>fd</b>
+<dd>the file descriptor the event mask is being changed for,
+<dt><b>events</b>
+<dd>the new event mask
+<dt><b>prev_events</b>
+<dd>the previous event mask
+</dl>
 </blockquote>
+
 <h3>LWS_CALLBACK_ADD_POLL_FD</h3>
 <blockquote>
 libwebsocket deals with its <b>poll</b> loop
@@ -802,38 +815,39 @@ polling array with the other server.  This and the other
 POLL_FD related callbacks let you put your specialized
 poll array interface code in the callback for protocol 0, the
 first protocol you support, usually the HTTP protocol in the
-serving case.  This callback happens when a socket needs to be
-</blockquote>
-<h3>added to the polling loop</h3>
-<blockquote>
-<tt><b>in</b></tt> contains the fd, and
-<tt><b>len</b></tt> is the events bitmap (like, POLLIN).  If you are using the
+serving case.
+<p>This callback happens when a socket needs to be
+added to the polling loop. In this case, cast  <tt><b>in</b></tt> to point to a <tt><i>struct libwebsocket_pollargs</i></tt>, 
+and set up the poll operation using the struct libwebsocket_pollargs fields 
+<tt><b>fd</b></tt> (the pertinent file descriptor) and <tt><b>events</b></tt> (the events bitmap - like, POLLIN).  If you are using the
 internal polling loop (the "service" callback), you can just
 ignore these callbacks.
 </blockquote>
 <h3>LWS_CALLBACK_DEL_POLL_FD</h3>
 <blockquote>
 This callback happens when a socket descriptor
-needs to be removed from an external polling array.  <tt><b>in</b></tt> is
-the socket desricptor.  If you are using the internal polling
+needs to be removed from an external polling array.  The file descriptor will be passed in the same way as in LWS_CALLBACK_ADD_POLL_FD, 
+that is, the <tt><b>fd</b></tt> field of <tt><i>struct libwebsocket_pollargs</i></tt> which <tt><b>in</b></tt> points to.
+If you are using the internal polling
 loop, you can just ignore it.
 </blockquote>
-<h3>LWS_CALLBACK_SET_MODE_POLL_FD</h3>
+<h3>LWS_CALLBACK_CHANGE_MODE_POLL_FD</h3>
 <blockquote>
 This callback happens when libwebsockets
-wants to modify the events for the socket descriptor in <tt><b>in</b></tt>.
-The handler should OR <tt><b>len</b></tt> on to the events member of the pollfd
-struct for this socket descriptor.  If you are using the
+wants to modify the event mask for the socket descriptor in field <tt><b>fd</b></tt> of  <tt><i>struct libwebsocket_pollargs</i></tt>.
+The new event mask is passed in as the  <tt><b>events</b></tt> field; the previous mask is passed as <tt><b>prev_events</b></tt>.
+The handler should set the <tt><b>events</b></tt> mask on the <tt><b>fd</b></tt> descriptor.
+If events equals prev_events, there's no change, hence nothing to do.
+If you are using the
 internal polling loop, you can just ignore it.
 </blockquote>
-<h3>LWS_CALLBACK_CLEAR_MODE_POLL_FD</h3>
+
+<h3>LWS_CALLBACK_LOCK_POLL, LWS_CALLBACK_UNLOCK_POLL</h3>
 <blockquote>
-This callback occurs when libwebsockets
-wants to modify the events for the socket descriptor in <tt><b>in</b></tt>.
-The handler should AND ~<tt><b>len</b></tt> on to the events member of the
-pollfd struct for this socket descriptor.  If you are using the
-internal polling loop, you can just ignore it.
+These callbacks protect pollfd state around pollfd-related callbacks in a multi-threaded scenario. The file descriptor is passed the same way as the above 
+calls: the  <tt><b>fd</b></tt> field of  <tt><i>struct libwebsocket_pollargs</i></tt> which <tt><b>in</b></tt> points to.
 </blockquote>
+
 <hr>
 <h2>extension_callback - Hooks to allow extensions to operate</h2>
 <i>LWS_EXTERN int</i>
