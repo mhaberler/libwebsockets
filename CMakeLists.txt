@@ -571,6 +571,7 @@ if (NOT WITHOUT_TESTAPPS)
 		# zeroMQ/websockets proxy - zwsproxy
 		#
 		if (CZMQ_FOUND AND URIPARSER_FOUND)
+			LINK_DIRECTORIES(  ${CZMQ_LIBDIR} ${URIPARSER_LIBDIR})
 			create_test_app(zwsproxy
 				"zeromq-proxy/zwsmain.c"
 				""
@@ -583,9 +584,8 @@ if (NOT WITHOUT_TESTAPPS)
 					EXTERNAL_POLL
 					INSTALL_DATADIR="${CMAKE_INSTALL_PREFIX}/share"
 				)
-			include_directories(${CZMQ_INCLUDE_DIR} ${URIPARSER_INCLUDE_DIR}  zeromq-proxy)
+			include_directories(${CZMQ_INCLUDEDIR} ${URIPARSER_INCLUDEDIR}  zeromq-proxy)
 			list(APPEND LIB_LIST ${CZMQ_LIBRARIES} ${URIPARSER_LIBRARIES})
-			LINK_DIRECTORIES(${CZMQ_LIBDIR} ${URIPARSER_LIBDIR})
 			TARGET_LINK_LIBRARIES(zwsproxy ${CZMQ_LIBRARIES} ${URIPARSER_LIBRARIES})
 		endif()
 
