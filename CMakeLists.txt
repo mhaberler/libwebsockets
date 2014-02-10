@@ -33,6 +33,11 @@ if(GIT_EXECUTABLE)
     message("Git commit hash: ${LWS_BUILD_HASH}")
 endif()
 
+find_package(PkgConfig)
+pkg_check_modules(CZMQ  libczmq)
+pkg_check_modules(URIPARSER  liburiparser)
+
+
 option(WITH_SSL "Include SSL support (default OpenSSL, CyaSSL if USE_CYASSL is set)" ON)
 option(USE_EXTERNAL_ZLIB "Search the system for ZLib instead of using the included one (on Windows)" OFF)
 option(USE_CYASSL "Use CyaSSL replacement for OpenSSL. When settings this, you also need to specify CYASSL_LIB and CYASSL_INCLUDE_DIRS" OFF)
@@ -560,6 +565,28 @@ if (NOT WITHOUT_TESTAPPS)
 			if (WIN32)
 				target_link_libraries(test-server-extpoll ws2_32.lib)
 			endif(WIN32)
+		endif()
+
+		#
+		# zeroMQ/websockets proxy - zwsproxy
+		#
+		if (CZMQ_FOUND AND URIPARSER_FOUND)
+			create_test_app(zwsproxy
+				"zeromq-proxy/zwsmain.c"
+				""
+				"")
+
+			# Set defines for this executable only.
+			set_property(
+				TARGET zwsproxy
+				PROPERTY COMPILE_DEFINITIONS
+					EXTERNAL_POLL
+					INSTALL_DATADIR="${CMAKE_INSTALL_PREFIX}/share"
+				)
+			include_directories(${CZMQ_INCLUDE_DIR} ${URIPARSER_INCLUDE_DIR}  zeromq-proxy)
+			list(APPEND LIB_LIST ${CZMQ_LIBRARIES} ${URIPARSER_LIBRARIES})
+			LINK_DIRECTORIES(${CZMQ_LIBDIR} ${URIPARSER_LIBDIR})
+			TARGET_LINK_LIBRARIES(zwsproxy ${CZMQ_LIBRARIES} ${URIPARSER_LIBRARIES})
 		endif()
 
 		# Data files for running the test server.
